@@ -60,6 +60,7 @@ let mapleader = ","            " set leader key to comma
 nnoremap <silent> <Space> :nohlsearch<CR> " space clears search highlights
 nnoremap <leader>w :w<CR>      " ,w to save
 nnoremap <leader>q :q<CR>      " ,q to quit
+nnoremap Y yy
 
 " Start plugin section
 call plug#begin('~/.vim/plugged')

@@ -23,7 +23,7 @@ PS1="\u@\h \W\[\033[32m\]\$(parse_git_branch)\[\033[00m\]$ "
 # ----- Aliases -----
 alias ll="ls -alF"
 alias la="ls -A"
-alias l="ls -CF"
+alias lc="ls -CF"
 
 alias cp="cp -i"
 alias mv="mv -i"
