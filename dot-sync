@@ -70,9 +70,16 @@ backup_if_changed() {
   # $1 = path to back up
   local target="$1"
   if [[ -e "$target" ]]; then
-    local ts; ts="$(date +%Y%m%d-%H%M%S)"
-    cp -p "$target" "${target}.bak.${ts}"
-    log "Backed up: $target -> ${target}.bak.${ts}"
+    # Format: bak.YYYY-MMDD-HHMMSS under $REPO_DIR/.bak/<filename>/
+    local ts; ts="$(date +%Y-%m%d-%H%M%S)"
+    local bak_root bak_name bak_dir bak_file
+    bak_root="$REPO_DIR/.bak"
+    bak_name="$(basename "$target")"
+    bak_dir="$bak_root/$bak_name"
+    bak_file="$bak_dir/bak.$ts"
+    mkdir -p "$bak_dir"
+    cp -p "$target" "$bak_file"
+    log "Backed up: $target -> $bak_file"
   fi
 }
 

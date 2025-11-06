@@ -1,3 +1,6 @@
+/.bak/
+*.bak.*
+
 # Backup files
 *.bak.*
 .DS_Store
