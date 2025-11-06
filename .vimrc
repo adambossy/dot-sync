@@ -82,6 +82,16 @@ Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 
+" Amp Neovim plugin
+Plug 'sourcegraph/amp.nvim'
+
 call plug#end()
 " End plugin section
+
+
+if has('nvim')
+  lua << EOF
+require('amp').setup({ auto_start = true, log_level = "info" })
+EOF
+endif
 
