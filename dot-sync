@@ -202,8 +202,8 @@ do_push() {
         log "No repo changes to commit."
       else
         git add -A
-        if [[ -x "$REPO_DIR/.local/bin/git-ai-commit" ]]; then
-          "$REPO_DIR/.local/bin/git-ai-commit"
+        if [[ -x "$REPO_DIR/git-ai-commit" ]]; then
+          "$REPO_DIR/git-ai-commit"
           log "Committed using git-ai-commit."
         else
           warn "git-ai-commit not found or not executable; skipping commit."
