@@ -5,9 +5,9 @@
 Bidirectional dotfile synchronization between `$HOME` and a Git repository with confirm-before-overwrite protection and automatic backups.
 
 <p align="center">
-  <a href="https://github.com/adambossy/Toolbox/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+  <a href="https://github.com/adambossy/dot-sync/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
   &middot;
-  <a href="https://github.com/adambossy/Toolbox/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+  <a href="https://github.com/adambossy/dot-sync/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   <br />
   <br />
 </p>
@@ -89,7 +89,7 @@ Bidirectional dotfile synchronization between `$HOME` and a Git repository with 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/adambossy/Toolbox.git ~/code/dot-sync
+   git clone https://github.com/adambossy/dot-sync.git ~/code/dot-sync
    cd ~/code/dot-sync
    ```
 
