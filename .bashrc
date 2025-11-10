@@ -115,6 +115,9 @@ pathappend "/opt/homebrew/bin"
 export BUN_INSTALL="$HOME/.bun"
 pathappend "$BUN_INSTALL/bin"
 
+# pyton
+export PYTHONPYCACHEPREFIX="$PWD/.cache/pycache"
+
 export PATH
 
 # gcloud

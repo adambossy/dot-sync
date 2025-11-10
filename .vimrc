@@ -33,6 +33,8 @@ set hlsearch                   " highlight all search matches
 " ---------- Files ----------
 set autoread                   " auto-reload file if changed externally
 set hidden                     " allow buffer switching without saving
+set backup                     " enable backup files
+set backupdir=~/.local/state/nvim/backup/ " write backups outside cwd
 
 " Persistent undo
 if has('persistent_undo')      " check if Vim supports persistent undo

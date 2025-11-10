@@ -54,6 +54,9 @@
 [push]
 	default = simple
 	forceWithLease = true
+	autoSetupRemote = true
 
 [pager]
 	branch = false
+[fetch]
+	prune = true
