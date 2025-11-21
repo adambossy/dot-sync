@@ -93,7 +93,32 @@ call plug#end()
 
 if has('nvim')
   lua << EOF
-require('amp').setup({ auto_start = true, log_level = "info" })
+local function safe_require(mod)
+  local ok, result = pcall(require, mod)
+  if not ok then
+    return nil
+  end
+  return result
+end
+
+-- Try to load the main Amp plugin module. If it's not available, fail gracefully.
+local amp = safe_require("amp")
+if not amp then
+  print("Amp plugin not available (module 'amp' not found')")
+  return
+end
+
+amp.setup({ auto_start = true, log_level = "info" })
+
+-- Helper to safely use the Amp messaging module.
+local function with_amp_message(callback)
+  local amp_message = safe_require("amp.message")
+  if not amp_message then
+    print("Amp messaging module not available")
+    return
+  end
+  callback(amp_message)
+end
 
 -- Amp commands
 vim.api.nvim_create_user_command("AmpSend", function(opts)
@@ -103,8 +128,9 @@ vim.api.nvim_create_user_command("AmpSend", function(opts)
     return
   end
 
-  local amp_message = require("amp.message")
-  amp_message.send_message(message)
+  with_amp_message(function(amp_message)
+    amp_message.send_message(message)
+  end)
 end, {
   nargs = "*",
   desc = "Send a message to Amp",
@@ -115,8 +141,9 @@ vim.api.nvim_create_user_command("AmpSendBuffer", function(opts)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   local content = table.concat(lines, "\n")
 
-  local amp_message = require("amp.message")
-  amp_message.send_message(content)
+  with_amp_message(function(amp_message)
+    amp_message.send_message(content)
+  end)
 end, {
   nargs = "?",
   desc = "Send current buffer contents to Amp",
@@ -126,8 +153,9 @@ vim.api.nvim_create_user_command("AmpPromptSelection", function(opts)
   local lines = vim.api.nvim_buf_get_lines(0, opts.line1 - 1, opts.line2, false)
   local text = table.concat(lines, "\n")
 
-  local amp_message = require("amp.message")
-  amp_message.send_to_prompt(text)
+  with_amp_message(function(amp_message)
+    amp_message.send_to_prompt(text)
+  end)
 end, {
   range = true,
   desc = "Add selected text to Amp prompt",
@@ -148,8 +176,9 @@ vim.api.nvim_create_user_command("AmpPromptRef", function(opts)
     ref = ref .. "#L" .. opts.line1
   end
 
-  local amp_message = require("amp.message")
-  amp_message.send_to_prompt(ref)
+  with_amp_message(function(amp_message)
+    amp_message.send_to_prompt(ref)
+  end)
 end, {
   range = true,
   desc = "Add file reference (with selection) to Amp prompt",
