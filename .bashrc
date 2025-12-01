@@ -110,6 +110,7 @@ pathmunge "$HOME/.local/bin"
 # ----- Custom -----
 
 pathappend "/opt/homebrew/bin"
+pathappend "/opt/homebrew/opt/postgresql@17/bin"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
@@ -138,6 +139,32 @@ export NODE_ENV=development
 # Add toolbox to PATH
 pathappend() { case ":$PATH:" in *":$1:"*) ;; *) PATH="$PATH:$1";; esac }
 pathappend "$HOME/code/dot-sync"
+
+# Run missing commands via uv only inside uv-managed Python projects
+in_uv_project() {
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/uv.lock" ]; then
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+command_not_found_handle() {
+  printf '[cnf] %q\n' "$@" >&2
+
+  # Try running the command inside uv, but only for uv projects
+  if command -v uv >/dev/null 2>&1 && in_uv_project; then
+    echo "Command '$1' not found. Trying with: uv run $*"
+    uv run "$@"
+    return $?
+  fi
+  # Fallback to normal error message if not in a uv project (or uv missing)
+  echo "bash: $1: command not found"
+  return 127
+}
 
 echo "Sourced .bashrc."
 
