@@ -32,6 +32,7 @@ alias ..="cd .."
 alias ...="cd ../.."
 
 alias vim=nvim
+alias claude='claude --dangerously-skip-permissions'
 
 # Reload bashrc quickly
 alias brc="source ~/.bashrc"
