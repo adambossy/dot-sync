@@ -29,6 +29,7 @@ FILES=(
   ".local/bin/convert-heics-to-jpgs"
   "Library/Application Support/Amethyst/Layouts/centered-primary-columns.js"
   "Library/Application Support/Amethyst/Layouts/centered-twin-columns.js"
+  ".config/nvim/lua/config/aerial.lua"
   ".config/nvim/lua/config/autocmds.lua"
   ".config/nvim/lua/config/keymaps.lua"
   ".config/nvim/lua/config/lazy.lua"
