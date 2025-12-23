@@ -19,7 +19,7 @@
 	bd = branch -d
 	bD = branch -D
 	pl = pull --rebase
-	up = "!git checkout master && git pull --rebase --prune && git checkout - && git rebase master"
+	up = "!git checkout master && git pull --rebase --prune && git checkout - && git clean-rebase"
 	unstage  = reset HEAD --
 	undo  = reset --soft HEAD^
 	last = show HEAD
