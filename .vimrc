@@ -36,6 +36,11 @@ set hidden                     " allow buffer switching without saving
 set backup                     " enable backup files
 set backupdir=~/.local/state/nvim/backup/ " write backups outside cwd
 
+" Backup directory
+if !isdirectory($HOME . '/.local/state/nvim/backup')
+  call mkdir($HOME . '/.local/state/nvim/backup', 'p', 0700)
+endif
+
 " Persistent undo
 if has('persistent_undo')      " check if Vim supports persistent undo
   set undofile                  " save undo history to disk
