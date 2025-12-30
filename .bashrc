@@ -99,7 +99,7 @@ gwt() {
     return 1
   fi
 
-  local worktree_path=$(git worktree list --porcelain | grep -A 2 "branch refs/heads/$1" | head -n 1 | cut -d ' ' -f 2)
+  local worktree_path=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/$1" | head -n 1 | cut -d ' ' -f 2)
 
   if [ -z "$worktree_path" ]; then
     echo "No worktree found for branch: $1"
