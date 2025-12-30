@@ -167,3 +167,6 @@ command_not_found_handle() {
 
 echo "Sourced .bashrc."
 
+
+# opencode
+export PATH=/Users/adambossy/.opencode/bin:$PATH
