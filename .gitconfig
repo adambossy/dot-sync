@@ -18,6 +18,9 @@
 	br = branch
 	bd = branch -d
 	bD = branch -D
+	wl = worktree list
+	wa = worktree add
+	wr = worktree remove
 	pl = pull --rebase
 	up = "!git checkout master && git pull --rebase --prune && git checkout - && git clean-rebase"
 	unstage  = reset HEAD --

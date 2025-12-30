@@ -92,6 +92,23 @@ extract () {
   fi
 }
 
+# Switch to worktree by branch name
+gwt() {
+  if [ -z "$1" ]; then
+    echo "Usage: gwt <branch-name>"
+    return 1
+  fi
+
+  local worktree_path=$(git worktree list --porcelain | grep -A 2 "branch refs/heads/$1" | head -n 1 | cut -d ' ' -f 2)
+
+  if [ -z "$worktree_path" ]; then
+    echo "No worktree found for branch: $1"
+    return 1
+  fi
+
+  cd "$worktree_path"
+}
+
 # Pager & man colors
 export LESS='-R --ignore-case --wheel-lines=3'
 export LESSHISTFILE=-
