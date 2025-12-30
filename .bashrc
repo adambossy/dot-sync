@@ -109,6 +109,14 @@ gwt() {
   cd "$worktree_path"
 }
 
+# Completion for gwt
+_gwt_completion() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local branches=$(git worktree list --porcelain 2>/dev/null | grep "^branch " | cut -d '/' -f 3-)
+  COMPREPLY=($(compgen -W "$branches" -- "$cur"))
+}
+complete -F _gwt_completion gwt
+
 # Pager & man colors
 export LESS='-R --ignore-case --wheel-lines=3'
 export LESSHISTFILE=-
