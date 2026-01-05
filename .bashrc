@@ -128,19 +128,21 @@ export GROFF_NO_SGR=1
 pathmunge () { case ":$PATH:" in *":$1:"*) ;; *) PATH="$1:$PATH" ;; esac }
 pathappend () { case ":$PATH:" in *":$1:"*) ;; *) PATH="$PATH:$1" ;; esac }
 
-# Your paths
 pathmunge "$HOME/bin"
 pathmunge "$HOME/.local/bin"
 
+pathappend "/opt/homebrew/bin"
+pathappend "/opt/homebrew/opt/postgresql@17/bin"  # postgres
+pathappend "$HOME/.bun/bin"                       # bun
+pathappend "$HOME/code/dot-sync"                  # toolbox
+pathappend "$HOME/.opencode/bin"                  # opencode
+pathappend "$HOME/.amp/bin"                       # Amp CLI
+pathappend "$HOME/go/bin"                         # gastown
 
 # ----- Custom -----
 
-pathappend "/opt/homebrew/bin"
-pathappend "/opt/homebrew/opt/postgresql@17/bin"
-
 # bun
 export BUN_INSTALL="$HOME/.bun"
-pathappend "$BUN_INSTALL/bin"
 
 # pyton
 export PYTHONPYCACHEPREFIX="$PWD/.cache/pycache"
@@ -159,10 +161,6 @@ source ~/.local/bin/bashmarks.sh
 
 # node
 export NODE_ENV=development
-
-# Add toolbox to PATH
-pathappend() { case ":$PATH:" in *":$1:"*) ;; *) PATH="$PATH:$1";; esac }
-pathappend "$HOME/code/dot-sync"
 
 # Run missing commands via uv only inside uv-managed Python projects
 in_uv_project() {
@@ -191,10 +189,3 @@ command_not_found_handle() {
 }
 
 echo "Sourced .bashrc."
-
-
-# opencode
-export PATH=/Users/adambossy/.opencode/bin:$PATH
-
-# Amp CLI
-export PATH="/Users/adambossy/.amp/bin:$PATH"
