@@ -195,3 +195,6 @@ echo "Sourced .bashrc."
 
 # opencode
 export PATH=/Users/adambossy/.opencode/bin:$PATH
+
+# Amp CLI
+export PATH="/Users/adambossy/.amp/bin:$PATH"
