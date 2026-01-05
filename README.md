@@ -171,6 +171,7 @@ The following files are automatically synced by default:
 - `git-clean-local-branches` — Clean up merged and stale branches
 - `git-clean-rebase` — Interactive rebase cleanup tool
 - `convert-heics-to-jpgs` — Bulk HEIC to JPEG converter
+- `organize-files` — AI-powered file organizer for Documents directory
 
 **macOS-specific:**
 - `~/Library/Application Support/Amethyst/Layouts/centered-primary-columns.js`
@@ -306,6 +307,59 @@ Bulk converter for HEIC images to JPEG format (useful for iOS photo exports).
 **Usage:**
 ```bash
 convert-heics-to-jpgs /path/to/photos/
+```
+
+---
+
+### `organize-files`
+
+AI-powered file organizer that intelligently categorizes and moves files into your Documents directory.
+
+**Features:**
+- Analyzes Documents directory structure using `tree`
+- Reads file names and contents (when possible)
+- Uses AI to determine the best destination folder
+- Suggests improved filenames following naming conventions
+- Supports dry-run mode to preview changes
+- Creates directories as needed
+- Prompts before overwriting existing files
+
+**Usage:**
+```bash
+# Preview what would happen (safe)
+organize-files --dry-run somefile.pdf
+
+# Organize one or more files
+organize-files file1.pdf file2.docx
+
+# Organize multiple files at once
+organize-files ~/Downloads/*.pdf
+
+# Use custom Documents directory
+organize-files --documents /path/to/docs file.pdf
+```
+
+**Dependencies:**
+- [`tree`](https://en.wikipedia.org/wiki/Tree_(command)) command
+- [`llm` CLI tool](https://llm.datasette.io/)
+- OpenAI API key configured (`llm keys set openai`)
+
+**Naming Convention:**
+The tool follows a consistent naming pattern:
+- Lowercase letters
+- Hyphens to separate words
+- Dates in YYYY-MMDD format
+- Descriptive, semantic names
+
+**Examples:**
+```bash
+# A receipt file gets organized into finance/receipts
+organize-files receipt-from-restaurant.pdf
+# -> ~/Documents/finance/receipts/receipt-2024-12-15.pdf
+
+# A wedding document goes to the wedding folder
+organize-files --dry-run table-layout.pdf
+# -> Preview: ~/Documents/wedding/wedding-table-layout.pdf
 ```
 
 ---

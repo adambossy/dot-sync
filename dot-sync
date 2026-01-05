@@ -6,7 +6,7 @@ set -euo pipefail
 #   ~/.vimrc
 #   ~/.bashrc
 #   ~/.gitconfig
-#   ~/.local/bin/{git-ai-commit,git-clean-local-branches,git-clean-rebase}
+#   ~/.local/bin/{git-ai-commit,git-clean-local-branches,git-clean-rebase,convert-heics-to-jpgs,organize-files}
 
 # -------------------------------------------------------------------
 # Repo dir = directory containing this script
@@ -27,6 +27,7 @@ FILES=(
   ".local/bin/git-clean-local-branches"
   ".local/bin/git-clean-rebase"
   ".local/bin/convert-heics-to-jpgs"
+  ".local/bin/organize-files"
   "Library/Application Support/Amethyst/Layouts/centered-primary-columns.js"
   "Library/Application Support/Amethyst/Layouts/centered-twin-columns.js"
   ".config/nvim/lua/config/aerial.lua"

@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""
+File Organization Tool
+
+Uses tree and llm CLI to intelligently organize files into the ~/Documents directory.
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional
+
+
+def get_documents_tree(documents_path: Path) -> str:
+    """Get the tree structure of the Documents directory."""
+    try:
+        result = subprocess.run(
+            ['tree', '-d', '-L', '2', str(documents_path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error running tree command: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def read_file_content(file_path: Path, max_bytes: int = 10000) -> Optional[str]:
+    """
+    Try to read file contents if it's a text file.
+    Returns None if the file is binary or unreadable.
+    """
+    try:
+        # Try to read as text
+        with open(file_path, 'r', encoding='utf-8', errors='strict') as f:
+            content = f.read(max_bytes)
+            if len(content) == max_bytes:
+                content += "\n[... truncated ...]"
+            return content
+    except (UnicodeDecodeError, PermissionError):
+        # File is likely binary or not readable
+        return None
+
+
+def query_llm(prompt: str) -> str:
+    """Send a prompt to the llm CLI and return the response."""
+    try:
+        result = subprocess.run(
+            ['llm', prompt],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=60
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        print(f"Error running llm command: {e}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.TimeoutExpired:
+        print("LLM command timed out", file=sys.stderr)
+        sys.exit(1)
+
+
+def decide_file_destination(
+    file_path: Path,
+    tree_structure: str,
+    content: Optional[str]
+) -> Dict[str, str]:
+    """
+    Use LLM to decide the best destination for a file.
+    Returns a dict with 'directory', 'filename', and 'reasoning' keys.
+    """
+    file_info = f"Filename: {file_path.name}\n"
+    file_info += f"Extension: {file_path.suffix}\n"
+
+    if content:
+        file_info += f"\nFile content preview:\n{content[:2000]}\n"
+    else:
+        file_info += "\n[Binary file - content not readable]\n"
+
+    prompt = f"""Given the following Documents directory structure:
+
+{tree_structure}
+
+And the following file to organize:
+
+{file_info}
+
+Please analyze this file and determine:
+1. The best subdirectory in ~/Documents where this file should be placed
+2. A good filename following the naming convention (lowercase with hyphens)
+3. Brief reasoning for your decision
+
+The naming convention uses:
+- lowercase letters
+- hyphens to separate words
+- dates in YYYY-MMDD format when relevant
+- descriptive names
+
+Respond ONLY with a JSON object in this exact format:
+{{
+  "directory": "relative/path/from/Documents",
+  "filename": "suggested-filename.ext",
+  "reasoning": "Brief explanation"
+}}
+
+Do not include any other text before or after the JSON."""
+
+    response = query_llm(prompt)
+
+    # Try to parse JSON from the response
+    try:
+        # Sometimes LLM might add markdown code blocks
+        if '```json' in response:
+            response = response.split('```json')[1].split('```')[0].strip()
+        elif '```' in response:
+            response = response.split('```')[1].split('```')[0].strip()
+
+        result = json.loads(response)
+
+        # Validate required keys
+        if not all(key in result for key in ['directory', 'filename', 'reasoning']):
+            raise ValueError("Missing required keys in LLM response")
+
+        return result
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"Error parsing LLM response: {e}", file=sys.stderr)
+        print(f"Response was: {response}", file=sys.stderr)
+        sys.exit(1)
+
+
+def move_file(
+    source: Path,
+    documents_path: Path,
+    destination_info: Dict[str, str],
+    dry_run: bool = False
+) -> None:
+    """Move and rename the file to its destination."""
+    dest_dir = documents_path / destination_info['directory']
+    dest_file = dest_dir / destination_info['filename']
+
+    print(f"\nFile: {source}")
+    print(f"  -> Destination: {dest_file}")
+    print(f"  -> Reasoning: {destination_info['reasoning']}")
+
+    if dry_run:
+        print("  [DRY RUN - no changes made]")
+        return
+
+    # Create destination directory if it doesn't exist
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    # Check if destination file already exists
+    if dest_file.exists():
+        response = input(f"  File {dest_file} already exists. Overwrite? [y/N]: ")
+        if response.lower() != 'y':
+            print("  Skipped.")
+            return
+
+    # Move the file
+    try:
+        source.rename(dest_file)
+        print("  ✓ Moved successfully!")
+    except Exception as e:
+        print(f"  ✗ Error moving file: {e}", file=sys.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Organize files into ~/Documents using AI analysis'
+    )
+    parser.add_argument(
+        'files',
+        nargs='+',
+        type=str,
+        help='Files to organize'
+    )
+    parser.add_argument(
+        '--documents',
+        type=str,
+        default='~/Documents',
+        help='Path to Documents directory (default: ~/Documents)'
+    )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Show what would be done without actually moving files'
+    )
+
+    args = parser.parse_args()
+
+    # Expand and validate documents path
+    documents_path = Path(args.documents).expanduser().resolve()
+    if not documents_path.exists():
+        print(f"Error: Documents directory does not exist: {documents_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # Get the directory tree structure
+    print("Analyzing Documents directory structure...")
+    tree_structure = get_documents_tree(documents_path)
+
+    # Process each file
+    for file_path_str in args.files:
+        file_path = Path(file_path_str).expanduser().resolve()
+
+        if not file_path.exists():
+            print(f"Warning: File does not exist: {file_path}", file=sys.stderr)
+            continue
+
+        if not file_path.is_file():
+            print(f"Warning: Not a file: {file_path}", file=sys.stderr)
+            continue
+
+        print(f"\nAnalyzing: {file_path.name}")
+
+        # Try to read file content
+        content = read_file_content(file_path)
+
+        # Get LLM's recommendation
+        destination_info = decide_file_destination(file_path, tree_structure, content)
+
+        # Move the file
+        move_file(file_path, documents_path, destination_info, args.dry_run)
+
+    print("\n✓ All files processed!")
+
+
+if __name__ == '__main__':
+    main()
