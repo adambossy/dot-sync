@@ -22,7 +22,7 @@
 	wa = worktree add
 	wr = worktree remove
 	pl = pull --rebase
-	up = "!git checkout master && git pull --rebase --prune && git checkout - && git clean-rebase"
+	up = "!git checkout main && git pull --rebase --prune && git checkout - && git clean-rebase"
 	unstage  = reset HEAD --
 	undo  = reset --soft HEAD^
 	last = show HEAD

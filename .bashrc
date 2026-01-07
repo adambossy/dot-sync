@@ -4,15 +4,14 @@
 # ---------------------------------------
 
 # # ----- History -----
-HISTCONTROL=ignoredups:erasedups    # no duplicate entries
-HISTSIZE=10000                      # large in-memory history
-HISTFILESIZE=20000                  # large on-disk history
-shopt -s histappend                 # append history, don’t overwrite
+HISTCONTROL=ignoredups:erasedups # no duplicate entries
+HISTSIZE=10000                   # large in-memory history
+HISTFILESIZE=20000               # large on-disk history
+shopt -s histappend              # append history, don’t overwrite
 PROMPT_COMMAND="history -a; history -c; history -r${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 
-
 # # ----- Safer defaults -----
-set -o pipefail     # fail pipelines properly
+set -o pipefail # fail pipelines properly
 
 # ----- Prompt -----
 parse_git_branch() {
@@ -32,7 +31,7 @@ alias ..="cd .."
 alias ...="cd ../.."
 
 alias vim=nvim
-alias claude='claude --dangerously-skip-permissions'
+alias claude='claude --dangerously-skip-permissions --verbose'
 
 # Reload bashrc quickly
 alias brc="source ~/.bashrc"
@@ -41,7 +40,7 @@ alias brc="source ~/.bashrc"
 if command -v trash >/dev/null 2>&1; then
   alias rm='trash'
 else
-  alias rm='rm -i'  # interactive confirm as a fallback
+  alias rm='rm -i' # interactive confirm as a fallback
 fi
 
 # ----- Completion -----
@@ -69,23 +68,23 @@ export LSCOLORS=GxFxCxDxBxegedabagaced
 
 # ----- Functions -----
 
-mkcd () { mkdir -p -- "$1" && cd -- "$1"; }  # make dir and cd
+mkcd() { mkdir -p -- "$1" && cd -- "$1"; } # make dir and cd
 
 # Quick extract function
-extract () {
+extract() {
   if [ -f "$1" ]; then
     case "$1" in
-      *.tar.bz2)   tar xjf "$1"   ;;
-      *.tar.gz)    tar xzf "$1"   ;;
-      *.bz2)       bunzip2 "$1"   ;;
-      *.rar)       unrar x "$1"   ;;
-      *.gz)        gunzip "$1"    ;;
-      *.tar)       tar xf "$1"    ;;
-      *.tbz2)      tar xjf "$1"   ;;
-      *.tgz)       tar xzf "$1"   ;;
-      *.zip)       unzip "$1"     ;;
-      *.7z)        7z x "$1"      ;;
-      *)           echo "don't know how to extract '$1'" ;;
+    *.tar.bz2) tar xjf "$1" ;;
+    *.tar.gz) tar xzf "$1" ;;
+    *.bz2) bunzip2 "$1" ;;
+    *.rar) unrar x "$1" ;;
+    *.gz) gunzip "$1" ;;
+    *.tar) tar xf "$1" ;;
+    *.tbz2) tar xjf "$1" ;;
+    *.tgz) tar xzf "$1" ;;
+    *.zip) unzip "$1" ;;
+    *.7z) 7z x "$1" ;;
+    *) echo "don't know how to extract '$1'" ;;
     esac
   else
     echo "'$1' is not a valid file"
@@ -125,19 +124,19 @@ export MANWIDTH=999
 export GROFF_NO_SGR=1
 
 # ----- PATH hygiene -----
-pathmunge () { case ":$PATH:" in *":$1:"*) ;; *) PATH="$1:$PATH" ;; esac }
-pathappend () { case ":$PATH:" in *":$1:"*) ;; *) PATH="$PATH:$1" ;; esac }
+pathmunge() { case ":$PATH:" in *":$1:"*) ;; *) PATH="$1:$PATH" ;; esac }
+pathappend() { case ":$PATH:" in *":$1:"*) ;; *) PATH="$PATH:$1" ;; esac }
 
 pathmunge "$HOME/bin"
 pathmunge "$HOME/.local/bin"
 
 pathappend "/opt/homebrew/bin"
-pathappend "/opt/homebrew/opt/postgresql@17/bin"  # postgres
-pathappend "$HOME/.bun/bin"                       # bun
-pathappend "$HOME/code/dot-sync"                  # toolbox
-pathappend "$HOME/.opencode/bin"                  # opencode
-pathappend "$HOME/.amp/bin"                       # Amp CLI
-pathappend "$HOME/go/bin"                         # gastown
+pathappend "/opt/homebrew/opt/postgresql@17/bin" # postgres
+pathappend "$HOME/.bun/bin"                      # bun
+pathappend "$HOME/code/dot-sync"                 # toolbox
+pathappend "$HOME/.opencode/bin"                 # opencode
+pathappend "$HOME/.amp/bin"                      # Amp CLI
+pathappend "$HOME/go/bin"                        # gastown
 
 # ----- Custom -----
 
