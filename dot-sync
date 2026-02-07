@@ -6,6 +6,7 @@ set -euo pipefail
 #   ~/.vimrc
 #   ~/.bashrc
 #   ~/.gitconfig
+#   ~/.git-completion.bash
 #   ~/.local/bin/{git-ai-commit,git-clean-local-branches,git-clean-rebase,convert-heics-to-jpgs,organize-files}
 
 # -------------------------------------------------------------------
@@ -22,6 +23,7 @@ FILES=(
   ".vimrc"
   ".bashrc"
   ".gitconfig"
+  ".git-completion.bash"
   ".inputrc"
   ".sdirs"
   ".local/bin/git-ai-commit"

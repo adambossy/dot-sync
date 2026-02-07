@@ -163,6 +163,7 @@ The following files are automatically synced by default:
 **Dotfiles:**
 - `~/.vimrc`
 - `~/.bashrc`
+- `~/.git-completion.bash`
 - `~/.gitconfig`
 - `~/.inputrc`
 - `~/.sdirs`
@@ -192,6 +193,7 @@ Edit the `FILES` array in the `dot-sync` script:
 FILES=(
   ".vimrc"
   ".bashrc"
+  ".git-completion.bash"
   ".inputrc"
   "custom-config.conf"
   # ... add more files here

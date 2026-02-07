@@ -57,6 +57,7 @@ if [ -f /usr/share/bash-completion/completions/git ]; then
 elif [ -f /opt/homebrew/etc/bash_completion.d/git-completion.bash ]; then
   . /opt/homebrew/etc/bash_completion.d/git-completion.bash
 fi
+source ~/.git-completion.bash
 
 # ----- Environment -----
 export EDITOR="nvim"
