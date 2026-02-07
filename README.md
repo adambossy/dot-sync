@@ -164,6 +164,7 @@ The following files are automatically synced by default:
 - `~/.vimrc`
 - `~/.bashrc`
 - `~/.gitconfig`
+- `~/.inputrc`
 - `~/.sdirs`
 
 **Local utilities** (`~/.local/bin/`):
@@ -191,6 +192,7 @@ Edit the `FILES` array in the `dot-sync` script:
 FILES=(
   ".vimrc"
   ".bashrc"
+  ".inputrc"
   "custom-config.conf"
   # ... add more files here
 )
