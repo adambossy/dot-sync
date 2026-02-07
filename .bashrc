@@ -31,7 +31,10 @@ alias ..="cd .."
 alias ...="cd ../.."
 
 alias vim=nvim
+
+# Life live on the edge
 alias claude='claude --dangerously-skip-permissions --verbose'
+alias codex='codex --dangerously-bypass-approvals-and-sandbox'
 
 # Reload bashrc quickly
 alias brc="source ~/.bashrc"
