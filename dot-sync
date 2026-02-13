@@ -33,6 +33,8 @@ FILES=(
   ".local/bin/organize-files"
   "Library/Application Support/Amethyst/Layouts/centered-primary-columns.js"
   "Library/Application Support/Amethyst/Layouts/centered-twin-columns.js"
+  "Library/Application Support/Amethyst/Layouts/centered-resizable-pane-with-cols.js"
+  "Library/Application Support/Amethyst/Layouts/uniform-columns.js"
   ".config/nvim/lua/config/aerial.lua"
   ".config/nvim/lua/config/autocmds.lua"
   ".config/nvim/lua/config/keymaps.lua"
