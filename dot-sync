@@ -227,7 +227,21 @@ do_status() {
   return $ret
 }
 
-do_pull() { for rel in "${FILES[@]}"; do copy_repo_to_local "$rel"; done; }
+do_pull() {
+  # Ensure bashmarks.sh is installed
+  local bashmarks="$HOME_DIR/.local/bin/bashmarks.sh"
+  if [[ ! -f "$bashmarks" ]]; then
+    log "bashmarks.sh not found; downloading..."
+    mkdir -p "$(dirname "$bashmarks")"
+    if curl -fsSL https://raw.githubusercontent.com/huyng/bashmarks/master/bashmarks.sh -o "$bashmarks"; then
+      log "Downloaded bashmarks.sh"
+    else
+      warn "Failed to download bashmarks.sh"
+    fi
+  fi
+
+  for rel in "${FILES[@]}"; do copy_repo_to_local "$rel"; done
+}
 
 do_push() {
   for rel in "${FILES[@]}"; do copy_local_to_repo "$rel"; done
