@@ -160,7 +160,9 @@ if [ -f '/Users/adambossy/code/google-cloud-sdk/path.bash.inc' ]; then . '/Users
 if [ -f '/Users/adambossy/code/google-cloud-sdk/completion.bash.inc' ]; then . '/Users/adambossy/code/google-cloud-sdk/completion.bash.inc'; fi
 
 # bashmarks
-source ~/.local/bin/bashmarks.sh
+if [ -f ~/.local/bin/bashmarks.sh ]; then
+  source ~/.local/bin/bashmarks.sh
+fi
 
 # node
 export NODE_ENV=development
