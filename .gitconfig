@@ -47,7 +47,7 @@
 	clean-rebase = "!~/.local/bin/git-clean-rebase"
 	clean-local-branches = "!~/.local/bin/git-clean-local-branches"
 [core]
- 	editor = vim
+	editor = nvim
 [credential "https://github.com"]
 	helper = 
 	helper = !/opt/homebrew/bin/gh auth git-credential
