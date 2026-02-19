@@ -15,7 +15,9 @@ set -o pipefail # fail pipelines properly
 
 # ----- Prompt -----
 parse_git_branch() {
-  git branch 2>/dev/null | sed -n '/\* /s///p'
+  local branch
+  branch=$(git branch 2>/dev/null | sed -n '/\* /s///p')
+  [ -n "$branch" ] && printf " (%s)" "$branch"
 }
 PS1="\u@\h \W\[\033[32m\]\$(parse_git_branch)\[\033[00m\]$ "
 
