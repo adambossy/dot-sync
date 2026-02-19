@@ -193,4 +193,23 @@ command_not_found_handle() {
   return 127
 }
 
+# Host-specific dot-sync augmentations (tracked per machine in repo)
+if [[ -n "${DOTSYNC_REPO:-}" && -d "${DOTSYNC_REPO}" ]]; then
+  _dotsync_repo="${DOTSYNC_REPO}"
+elif [[ -d "$HOME/code/dot-sync" ]]; then
+  _dotsync_repo="$HOME/code/dot-sync"
+fi
+
+if [[ -n "${_dotsync_repo:-}" ]]; then
+  _host_short="$(hostname -s 2>/dev/null || true)"
+  if [[ -n "$_host_short" ]]; then
+    _host_bashrc="$_dotsync_repo/.local/bashrc.${_host_short}.sh"
+    if [[ -f "$_host_bashrc" ]]; then
+      # shellcheck disable=SC1090
+      source "$_host_bashrc"
+    fi
+  fi
+  unset _host_short _host_bashrc _dotsync_repo
+fi
+
 echo "Sourced .bashrc."

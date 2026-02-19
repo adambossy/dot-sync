@@ -222,6 +222,34 @@ FILES=(
   export DOTSYNC_REPO="/path/to/custom/repo"
   ```
 
+### Host-specific Bash augmentations
+
+`dot-sync` supports host-scoped `.bashrc` extensions committed in this repo.
+
+- Naming convention: `.local/bashrc.$HOSTNAME_SHORT.sh`
+- Load behavior: `.bashrc` sources only the host-specific file for the current machine.
+- Host key source: `hostname -s`
+
+Setup:
+
+```bash
+cd ~/code/dot-sync
+mkdir -p .local
+cp .local/bashrc.HOSTNAME.example.sh ".local/bashrc.$(hostname -s).sh"
+$EDITOR ".local/bashrc.$(hostname -s).sh"
+```
+
+Example use case for PostgreSQL build tooling on one machine:
+
+```bash
+pathappend "/opt/homebrew/opt/libpq/bin"
+export LDFLAGS="-L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib ${LDFLAGS:-}"
+export CPPFLAGS="-I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include ${CPPFLAGS:-}"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+```
+
+Commit the created host file if you want this machine's augmentation tracked in repo history.
+
 ---
 
 ## Backup System
