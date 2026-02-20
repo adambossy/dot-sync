@@ -53,9 +53,10 @@ Usage:
   dot-sync [options] status|diff
   dot-sync [options] pull   Copy repo -> local (confirm before overwrite; backup if changed)
   dot-sync [options] push   Copy local -> repo (confirm before overwrite; backup if changed), then git-ai-commit + git push
+  dot-sync [options] sync   Walk each diff hunk and choose repo -> local, local -> repo, or ignore
 
 Options:
-  -y, --yes              Skip overwrite confirmation prompts (non-interactive)
+  -y, --yes              Skip overwrite confirmations; for sync, auto-select Repo -> Local
   -h, --help             Show this help
 EOF
 }
@@ -210,6 +211,209 @@ copy_local_to_repo() {
   copy_with_confirm "$src" "$dst" "Local → Repo: $repo_rel" "$mode"
 }
 
+show_patch_file() {
+  local patch_file="$1"
+  if $have_colordiff; then
+    colordiff <"$patch_file" || true
+  else
+    cat "$patch_file"
+  fi
+}
+
+sync_choice_prompt() {
+  # Prints one of: repo_to_local | local_to_repo | ignore
+  # $1 = context label
+  local label="$1"
+  local ans
+  if $ASSUME_YES; then
+    printf "[dot-sync] Auto-confirm enabled; selecting repo -> local for %s\n" "$label" >&2
+    echo "repo_to_local"
+    return 0
+  fi
+  while true; do
+    echo "Choose sync direction for $label:" >&2
+    echo "  1) Repo -> Local" >&2
+    echo "  2) Local -> Repo" >&2
+    echo "  3) Ignore" >&2
+    read -r -p "Enter 1, 2, or 3 [3]: " ans
+    case "${ans:-3}" in
+    1) echo "repo_to_local"; return 0 ;;
+    2) echo "local_to_repo"; return 0 ;;
+    3) echo "ignore"; return 0 ;;
+    *) echo "Invalid choice: ${ans}. Please enter 1, 2, or 3." >&2 ;;
+    esac
+  done
+}
+
+sync_existing_pair_by_hunk() {
+  # $1 = local_rel, $2 = repo_rel, $3 = local_abs, $4 = repo_abs
+  local local_rel="$1" repo_rel="$2" local_abs="$3" repo_abs="$4"
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
+  local full_diff="$tmp_dir/full.diff"
+
+  local diff_ec=0
+  diff -u "$local_abs" "$repo_abs" >"$full_diff" || diff_ec=$?
+  if [[ "$diff_ec" -gt 1 ]]; then
+    warn "Failed to diff $local_rel ↔ $repo_rel (exit $diff_ec); skipping."
+    rm -rf "$tmp_dir"
+    return
+  fi
+
+  if ! grep -q '^@@ ' "$full_diff"; then
+    # Most likely a binary file diff or format we cannot hunk-split.
+    echo "=== DIFF for $local_rel ↔ $repo_rel ==="
+    show_diff "$local_abs" "$repo_abs"
+    local action
+    action="$(sync_choice_prompt "$local_rel ↔ $repo_rel (file-level)")"
+    case "$action" in
+    repo_to_local)
+      backup_if_changed "$local_abs"
+      cp -fp "$repo_abs" "$local_abs"
+      [[ "$local_rel" == .local/bin/* ]] && chmod 0755 "$local_abs" || true
+      log "Synced file: Repo -> Local ($local_rel)"
+      ;;
+    local_to_repo)
+      backup_if_changed "$repo_abs"
+      cp -fp "$local_abs" "$repo_abs"
+      if [[ "$local_rel" == .local/bin/* && -x "$local_abs" ]]; then chmod 0755 "$repo_abs"; fi
+      log "Synced file: Local -> Repo ($repo_rel)"
+      ;;
+    ignore) log "Ignored file: $local_rel ↔ $repo_rel" ;;
+    esac
+    rm -rf "$tmp_dir"
+    return
+  fi
+
+  awk -v out="$tmp_dir" '
+    /^--- / { old=$0; next }
+    /^\+\+\+ / { new=$0; next }
+    /^@@ / {
+      n++
+      f=sprintf("%s/hunk_%04d.patch", out, n)
+      print old > f
+      print new >> f
+      print $0 >> f
+      next
+    }
+    n>0 { print >> f }
+    END { print n > sprintf("%s/hunk_count", out) }
+  ' "$full_diff"
+
+  local hunk_count=0
+  if [[ -f "$tmp_dir/hunk_count" ]]; then
+    hunk_count="$(cat "$tmp_dir/hunk_count")"
+  fi
+  if [[ "$hunk_count" -le 0 ]]; then
+    warn "No hunks detected for $local_rel ↔ $repo_rel; skipping."
+    rm -rf "$tmp_dir"
+    return
+  fi
+
+  local local_backed_up=false
+  local repo_backed_up=false
+  local i hunk_file action
+  for ((i = 1; i <= hunk_count; i++)); do
+    hunk_file="$(printf '%s/hunk_%04d.patch' "$tmp_dir" "$i")"
+    echo "=== HUNK $i/$hunk_count for $local_rel ↔ $repo_rel ==="
+    show_patch_file "$hunk_file"
+    action="$(sync_choice_prompt "$local_rel hunk $i/$hunk_count")"
+    case "$action" in
+    repo_to_local)
+      if ! $local_backed_up; then
+        backup_if_changed "$local_abs"
+        local_backed_up=true
+      fi
+      if patch --quiet --forward "$local_abs" <"$hunk_file"; then
+        [[ "$local_rel" == .local/bin/* ]] && chmod 0755 "$local_abs" || true
+        log "Applied hunk $i/$hunk_count: Repo -> Local ($local_rel)"
+      else
+        warn "Failed applying hunk $i/$hunk_count Repo -> Local for $local_rel"
+      fi
+      ;;
+    local_to_repo)
+      if ! $repo_backed_up; then
+        backup_if_changed "$repo_abs"
+        repo_backed_up=true
+      fi
+      if patch --quiet --forward -R "$repo_abs" <"$hunk_file"; then
+        if [[ "$local_rel" == .local/bin/* && -x "$local_abs" ]]; then chmod 0755 "$repo_abs"; fi
+        log "Applied hunk $i/$hunk_count: Local -> Repo ($repo_rel)"
+      else
+        warn "Failed applying hunk $i/$hunk_count Local -> Repo for $repo_rel"
+      fi
+      ;;
+    ignore)
+      log "Ignored hunk $i/$hunk_count for $local_rel ↔ $repo_rel"
+      ;;
+    esac
+  done
+
+  rm -rf "$tmp_dir"
+}
+
+sync_missing_pair() {
+  # $1 = local_rel, $2 = repo_rel, $3 = local_abs, $4 = repo_abs
+  local local_rel="$1" repo_rel="$2" local_abs="$3" repo_abs="$4"
+  local action
+  if [[ -e "$repo_abs" && ! -e "$local_abs" ]]; then
+    action="$(sync_choice_prompt "$local_rel missing locally (repo has file)")"
+    case "$action" in
+    repo_to_local)
+      ensure_parent "$local_abs"
+      cp -fp "$repo_abs" "$local_abs"
+      [[ "$local_rel" == .local/bin/* ]] && chmod 0755 "$local_abs" || true
+      log "Created local from repo: $local_rel"
+      ;;
+    local_to_repo)
+      backup_if_changed "$repo_abs"
+      rm -f "$repo_abs"
+      log "Removed repo file to match missing local: $repo_rel"
+      ;;
+    ignore) log "Ignored missing-local pair: $local_rel ↔ $repo_rel" ;;
+    esac
+  elif [[ -e "$local_abs" && ! -e "$repo_abs" ]]; then
+    action="$(sync_choice_prompt "$repo_rel missing in repo (local has file)")"
+    case "$action" in
+    repo_to_local)
+      backup_if_changed "$local_abs"
+      rm -f "$local_abs"
+      log "Removed local file to match missing repo: $local_rel"
+      ;;
+    local_to_repo)
+      ensure_parent "$repo_abs"
+      cp -fp "$local_abs" "$repo_abs"
+      if [[ "$local_rel" == .local/bin/* && -x "$local_abs" ]]; then chmod 0755 "$repo_abs"; fi
+      log "Created repo file from local: $repo_rel"
+      ;;
+    ignore) log "Ignored missing-repo pair: $local_rel ↔ $repo_rel" ;;
+    esac
+  else
+    log "Missing both (skip): $local_rel | $repo_rel"
+  fi
+}
+
+do_sync() {
+  local entry pair local_rel repo_rel l r
+  for entry in "${FILES[@]}"; do
+    pair="$(split_entry "$entry")"
+    local_rel="${pair%%|*}"
+    repo_rel="${pair##*|}"
+    l="$HOME_DIR/$local_rel"
+    r="$REPO_DIR/$repo_rel"
+
+    if [[ -e "$l" && -e "$r" ]]; then
+      if cmp -s "$l" "$r"; then
+        log "No change: $local_rel"
+      else
+        sync_existing_pair_by_hunk "$local_rel" "$repo_rel" "$l" "$r"
+      fi
+    else
+      sync_missing_pair "$local_rel" "$repo_rel" "$l" "$r"
+    fi
+  done
+}
+
 do_status() {
   local ret=0
   for entry in "${FILES[@]}"; do
@@ -302,7 +506,7 @@ for arg in "$@"; do
     usage
     exit 0
     ;;
-  status | diff | pull | push)
+  status | diff | pull | push | sync)
     if [[ -n "$cmd" ]]; then
       echo "Multiple commands provided: '$cmd' and '$arg'" >&2
       usage
@@ -324,6 +528,7 @@ case "${cmd:-}" in
 status | diff) do_status ;;
 pull) do_pull ;;
 push) do_push ;;
+sync) do_sync ;;
 "") usage ;;
 esac
 

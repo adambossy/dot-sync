@@ -123,6 +123,9 @@ dot-sync pull
 
 # 3) Push files from local to repo, then auto-commit and push to remote
 dot-sync push
+
+# 4) Sync hunk-by-hunk in either direction
+dot-sync sync
 ```
 
 ### Commands
@@ -146,6 +149,16 @@ dot-sync push
   - Runs `git add -A` to stage all changes
   - Uses `git-ai-commit` to generate an AI commit message
   - Pushes to the remote `origin` (sets upstream if needed)
+
+- **`dot-sync sync`**  
+  Interactively resolve each diff hunk to converge local and repo files.  
+  - Shows each hunk one-by-one
+  - For each hunk, choose:
+    - `1` Repo → Local
+    - `2` Local → Repo
+    - `3` Ignore
+  - If a file exists on only one side, it prompts to either copy the existing file to the missing side, remove the existing file to match the missing side, or ignore
+  - Creates timestamped backups before modifying an existing file
 
 ### Notes
 
