@@ -50,9 +50,13 @@ usage() {
 dot-sync — sync a handful of dotfiles between \$HOME and this git repo.
 
 Usage:
-  dot-sync status|diff    Show differences (repo vs local)
-  dot-sync pull           Copy repo -> local (confirm before overwrite; backup if changed)
-  dot-sync push           Copy local -> repo (confirm before overwrite; backup if changed), then git-ai-commit + git push
+  dot-sync [options] status|diff
+  dot-sync [options] pull   Copy repo -> local (confirm before overwrite; backup if changed)
+  dot-sync [options] push   Copy local -> repo (confirm before overwrite; backup if changed), then git-ai-commit + git push
+
+Options:
+  -y, --yes              Skip overwrite confirmation prompts (non-interactive)
+  -h, --help             Show this help
 EOF
 }
 
@@ -62,6 +66,7 @@ EOF
 log() { printf "[dot-sync] %s\n" "$*"; }
 warn() { printf "[dot-sync:WARN] %s\n" "$*" >&2; }
 
+ASSUME_YES=false
 have_colordiff=false
 command -v colordiff >/dev/null 2>&1 && have_colordiff=true
 
@@ -131,6 +136,10 @@ confirm_overwrite() {
   if [[ -e "$dest" ]] && ! cmp -s "$dest" "$src"; then
     echo "=== DIFF for $label ==="
     show_diff "$dest" "$src"
+    if $ASSUME_YES; then
+      log "Auto-confirm enabled; overwriting: $label"
+      return 0
+    fi
     read -r -p "Overwrite $dest with $src ? [y/N] " ans
     case "${ans:-}" in
     y | Y | yes | YES) return 0 ;;
@@ -285,17 +294,37 @@ do_push() {
 # -------------------------------------------------------------------
 # Commands
 # -------------------------------------------------------------------
-cmd="${1:-}"
-case "$cmd" in
+cmd=""
+for arg in "$@"; do
+  case "$arg" in
+  -y | --yes) ASSUME_YES=true ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  status | diff | pull | push)
+    if [[ -n "$cmd" ]]; then
+      echo "Multiple commands provided: '$cmd' and '$arg'" >&2
+      usage
+      exit 1
+    fi
+    cmd="$arg"
+    ;;
+  "")
+    ;;
+  *)
+    echo "Unknown argument: $arg" >&2
+    usage
+    exit 1
+    ;;
+  esac
+done
+
+case "${cmd:-}" in
 status | diff) do_status ;;
 pull) do_pull ;;
 push) do_push ;;
--h | --help | "") usage ;;
-*)
-  echo "Unknown: $cmd" >&2
-  usage
-  exit 1
-  ;;
+"") usage ;;
 esac
 
 # -------------------------------------------------------------------
