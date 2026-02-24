@@ -18,9 +18,9 @@
 	br = branch
 	bd = branch -d
 	bD = branch -D
-	wl = worktree list
+	wl = "!git worktree list | awk '{print NR, $0}'"
 	wa = worktree add
-	wr = worktree remove
+	wr = "!f() { path=$(git worktree list | awk \"NR==$1{print \\$1}\"); if [ -z \"$path\" ]; then echo \"No worktree with number: $1\"; return 1; fi; git worktree remove \"$path\"; }; f"
 	pl = pull --rebase
 	up = "!git checkout main && git pull --rebase --prune && git checkout - && git clean-rebase"
 	unstage  = reset HEAD --
