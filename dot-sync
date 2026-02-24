@@ -236,6 +236,25 @@ show_patch_file() {
   fi
 }
 
+show_reverse_patch_file() {
+  # Display a patch with --- and +++ headers and +/- signs swapped
+  local patch_file="$1"
+  local reversed
+  reversed="$(awk '
+    /^--- / { sub(/^--- /, "+++ "); print; next }
+    /^\+\+\+ / { sub(/^\+\+\+ /, "--- "); print; next }
+    /^@@ / { print; next }
+    /^\+/ { sub(/^\+/, "-"); print; next }
+    /^-/ { sub(/^-/, "+"); print; next }
+    { print }
+  ' "$patch_file")"
+  if $have_colordiff; then
+    printf '%s\n' "$reversed" | colordiff || true
+  else
+    printf '%s\n' "$reversed"
+  fi
+}
+
 sync_choice_prompt() {
   # Prints one of: repo_to_local | local_to_repo | ignore
   # $1 = context label
@@ -278,8 +297,10 @@ sync_existing_pair_by_hunk() {
 
   if ! grep -q '^@@ ' "$full_diff"; then
     # Most likely a binary file diff or format we cannot hunk-split.
-    echo "=== DIFF for $local_rel ↔ $repo_rel ==="
+    echo "=== [1] Repo -> Local: local file will change ===" >&2
     show_diff "$local_abs" "$repo_abs"
+    echo "=== [2] Local -> Repo: repo file will change ===" >&2
+    show_diff "$repo_abs" "$local_abs"
     local action
     action="$(sync_choice_prompt "$local_rel ↔ $repo_rel (file-level)")"
     case "$action" in
@@ -331,8 +352,11 @@ sync_existing_pair_by_hunk() {
   local i hunk_file action
   for ((i = 1; i <= hunk_count; i++)); do
     hunk_file="$(printf '%s/hunk_%04d.patch' "$tmp_dir" "$i")"
-    echo "=== HUNK $i/$hunk_count for $local_rel ↔ $repo_rel ==="
+    echo "=== HUNK $i/$hunk_count for $local_rel ↔ $repo_rel ===" >&2
+    echo "--- [1] Repo -> Local: local file will change ---" >&2
     show_patch_file "$hunk_file"
+    echo "--- [2] Local -> Repo: repo file will change ---" >&2
+    show_reverse_patch_file "$hunk_file"
     action="$(sync_choice_prompt "$local_rel hunk $i/$hunk_count")"
     case "$action" in
     repo_to_local)
