@@ -116,7 +116,7 @@ reload_bashrc() {
     # Best-effort reload for this process; parent interactive shell still
     # requires an explicit `source ~/.bashrc` to import env/function changes.
     # shellcheck disable=SC1090
-    if source "$bashrc"; then
+    if (set +u; source "$bashrc"); then
       log "Reloaded $bashrc"
     else
       warn "Failed to source $bashrc"
