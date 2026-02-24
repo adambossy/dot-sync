@@ -42,9 +42,27 @@ alias codex='codex --dangerously-bypass-approvals-and-sandbox'
 alias brc="source ~/.bashrc"
 
 # Git worktree shortcuts
-alias gwl="git wl"
+gwl() {
+  git worktree list | awk '{print NR, $0}'
+}
 alias gwr="git wr"
 alias gwa="git wa"
+
+# Switch to worktree by number (from gwl)
+gws() {
+  if [ -z "$1" ]; then
+    echo "Usage: gws <number>"
+    gwl
+    return 1
+  fi
+  local path
+  path=$(git worktree list | awk "NR==$1{print \$1}")
+  if [ -z "$path" ]; then
+    echo "No worktree with number: $1"
+    return 1
+  fi
+  cd "$path"
+}
 
 # Safer 'rm' using macOS Trash (brew install trash)
 if command -v trash >/dev/null 2>&1; then
