@@ -45,7 +45,19 @@ alias brc="source ~/.bashrc"
 gwl() {
   git worktree list | awk '{print NR, $0}'
 }
-alias gwr="git wr"
+gwr() {
+  if [ -z "$1" ]; then
+    echo "Usage: gwr <number>"
+    return 1
+  fi
+  local path
+  path=$(git worktree list | awk "NR==$1{print \$1}")
+  if [ -z "$path" ]; then
+    echo "No worktree with number: $1"
+    return 1
+  fi
+  git worktree remove "$path"
+}
 gwa() {
   if [ -z "$1" ]; then
     echo "Usage: gwa <natural language description>"
