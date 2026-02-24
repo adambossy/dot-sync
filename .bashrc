@@ -41,6 +41,11 @@ alias codex='codex --dangerously-bypass-approvals-and-sandbox'
 # Reload bashrc quickly
 alias brc="source ~/.bashrc"
 
+# Git worktree shortcuts
+alias gwl="git wl"
+alias gwr="git wr"
+alias gwa="git wa"
+
 # Safer 'rm' using macOS Trash (brew install trash)
 if command -v trash >/dev/null 2>&1; then
   alias rm='trash'
