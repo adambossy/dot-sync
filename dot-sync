@@ -110,6 +110,22 @@ backup_if_changed() {
 
 ensure_parent() { mkdir -p "$(dirname "$1")"; }
 
+reload_bashrc() {
+  local bashrc="$HOME_DIR/.bashrc"
+  if [[ -f "$bashrc" ]]; then
+    # Best-effort reload for this process; parent interactive shell still
+    # requires an explicit `source ~/.bashrc` to import env/function changes.
+    # shellcheck disable=SC1090
+    if source "$bashrc"; then
+      log "Reloaded $bashrc"
+    else
+      warn "Failed to source $bashrc"
+    fi
+  else
+    warn "$bashrc not found; skipping source."
+  fi
+}
+
 # Parse entry that may be either a simple relative path or a mapping in the
 # form: "local_path => repo_path". Prints "local|repo".
 split_entry() {
@@ -412,6 +428,7 @@ do_sync() {
       sync_missing_pair "$local_rel" "$repo_rel" "$l" "$r"
     fi
   done
+  reload_bashrc
 }
 
 do_status() {
@@ -454,6 +471,7 @@ do_pull() {
   fi
 
   for rel in "${FILES[@]}"; do copy_repo_to_local "$rel"; done
+  reload_bashrc
 }
 
 do_push() {
