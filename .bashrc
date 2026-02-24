@@ -46,7 +46,21 @@ gwl() {
   git worktree list | awk '{print NR, $0}'
 }
 alias gwr="git wr"
-alias gwa="git wa"
+gwa() {
+  if [ -z "$1" ]; then
+    echo "Usage: gwa <natural language description>"
+    return 1
+  fi
+  if [ -z "$WORKTREE_PATH" ]; then
+    echo "Error: WORKTREE_PATH environment variable is not set"
+    return 1
+  fi
+  local description="$*"
+  local branch_name
+  branch_name=$(llm -s "Convert the following description into a short, lowercase, hyphen-separated git branch name. Output only the branch name, nothing else." "$description") || return 1
+  local worktree_dir="$WORKTREE_PATH/$branch_name"
+  git worktree add "$worktree_dir" -b "$branch_name"
+}
 
 # Switch to worktree by number (from gwl)
 gws() {
