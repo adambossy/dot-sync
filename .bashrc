@@ -57,7 +57,11 @@ gwa() {
   local branch_name
   branch_name=$(llm -s "Convert the following description into a short, lowercase, hyphen-separated git branch name. Output only the branch name, nothing else." "$description") || return 1
   local worktree_dir="$WORKTREE_PATH/$branch_name"
-  git worktree add "$worktree_dir" -b "$branch_name"
+  if [[ "$(hostname)" == "Adams-MacBook-Pro.local" && -x "$HOME/code/spara-bare/branches/main/scripts/setup-worktree.sh" ]]; then
+    "$HOME/code/spara-bare/branches/main/scripts/setup-worktree.sh" "$worktree_dir" "$branch_name"
+  else
+    git worktree add "$worktree_dir" -b "$branch_name"
+  fi
 }
 
 # Switch to worktree by number (from gwl)
