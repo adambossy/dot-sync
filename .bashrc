@@ -80,13 +80,6 @@ gws() {
   cd "$path"
 }
 
-# Safer 'rm' using macOS Trash (brew install trash)
-if command -v trash >/dev/null 2>&1; then
-  alias rm='trash'
-else
-  alias rm='rm -i' # interactive confirm as a fallback
-fi
-
 # ----- Completion -----
 # Bash completion framework
 if [ -f /usr/share/bash-completion/bash_completion ]; then
