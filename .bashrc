@@ -175,6 +175,7 @@ pathappend "$HOME/code/dot-sync"                 # toolbox
 pathappend "$HOME/.opencode/bin"                 # opencode
 pathappend "$HOME/.amp/bin"                      # Amp CLI
 pathappend "$HOME/go/bin"                        # gastown
+pathappend "/opt/homebrew/opt/node@22/bin"        # node
 
 # ----- Custom -----
 
