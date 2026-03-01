@@ -248,3 +248,21 @@ if [[ -n "${_dotsync_repo:-}" ]]; then
 fi
 
 echo "Sourced .bashrc."
+
+tn() {
+  local keys used c name i
+  keys='qwertyuiopasdfghjklzxcvbnm'
+  used="$(tmux list-sessions -F '#S' 2>/dev/null | sed -nE 's/^t([a-z])$/\1/p')"
+
+  for ((i=0; i<${#keys}; i++)); do
+    c="${keys:i:1}"
+    if ! grep -qx "$c" <<<"$used"; then
+      name="t$c"
+      tmux new-session -s "$name"
+      return
+    fi
+  done
+
+  echo "No free short tmux names left (tq..tm)." >&2
+  return 1
+}
