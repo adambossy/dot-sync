@@ -3,3 +3,5 @@
 -- Add any additional keymaps here
 
 vim.keymap.set("n", "Y", "yy", { desc = "Yank whole line" })
+
+vim.keymap.set({ "n", "i", "v" }, "<C-c>", "<Esc>", { desc = "Escape" })
