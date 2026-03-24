@@ -65,9 +65,9 @@ gwa() {
 }
 
 # Switch to worktree by number (from gwl)
-gws() {
+go() {
   if [ -z "$1" ]; then
-    echo "Usage: gws <number>"
+    echo "Usage: go <number>"
     gwl
     return 1
   fi
