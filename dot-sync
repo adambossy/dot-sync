@@ -323,9 +323,10 @@ sync_existing_pair_by_hunk() {
   fi
 
   awk -v out="$tmp_dir" '
-    /^--- / { old=$0; next }
-    /^\+\+\+ / { new=$0; next }
+    !seen_hunk && /^--- / { old=$0; next }
+    !seen_hunk && /^\+\+\+ / { new=$0; next }
     /^@@ / {
+      seen_hunk=1
       n++
       f=sprintf("%s/hunk_%04d.patch", out, n)
       print old > f
