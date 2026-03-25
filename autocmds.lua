@@ -14,3 +14,11 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.b.autoformat = false
   end,
 })
+
+-- Disable autoformat for sh files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "sh",
+  callback = function()
+    vim.b.autoformat = false
+  end,
+})
