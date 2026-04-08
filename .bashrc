@@ -72,7 +72,7 @@ go() {
     return 1
   fi
   local path
-  path=$(git worktree list | awk "NR==$1{print \$1}")
+  path=$(git worktree list | awk "NR==$1+1{print \$1}")
   if [ -z "$path" ]; then
     echo "No worktree with number: $1"
     return 1
