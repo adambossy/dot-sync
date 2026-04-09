@@ -46,6 +46,8 @@
 	ai = "!~/.local/bin/git-ai-commit"
 	clean-rebase = "!~/.local/bin/git-clean-rebase"
 	clean-local-branches = "!~/.local/bin/git-clean-local-branches"
+	lo = log --oneline -n 5
+	peek = log --oneline --name-only -n 5
 [core]
 	editor = nvim
 [credential "https://github.com"]
