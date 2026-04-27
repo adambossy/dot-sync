@@ -31,6 +31,7 @@ FILES=(
   ".local/bin/git-ai-commit"
   ".local/bin/git-clean-local-branches"
   ".local/bin/git-clean-rebase"
+  ".local/bin/git-peek-format"
   ".local/bin/convert-heics-to-jpgs"
   ".local/bin/organize-files"
   "Library/Application Support/Amethyst/Layouts/centered-primary-columns.js"

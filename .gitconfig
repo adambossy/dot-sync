@@ -47,7 +47,7 @@
 	clean-rebase = "!~/.local/bin/git-clean-rebase"
 	clean-local-branches = "!~/.local/bin/git-clean-local-branches"
 	lo = log --oneline -n 5
-	peek = "!echo \"On branch $(git branch --show-current)\" && git log --oneline --decorate --name-only -n 5"
+	peek = "!echo \"On branch $(git branch --show-current)\" && git log --color=always --oneline --decorate --name-only -n 5 | ~/.local/bin/git-peek-format"
 [core]
 	editor = nvim
 [credential "https://github.com"]
