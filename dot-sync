@@ -8,6 +8,8 @@ set -euo pipefail
 #   ~/.gitconfig
 #   ~/.git-completion.bash
 #   ~/.local/bin/{git-ai-commit,git-clean-local-branches,git-clean-rebase,convert-heics-to-jpgs,organize-files}
+#   ~/.claude/skills/    (directory)
+#   ~/.claude/commands/  (directory)
 
 # -------------------------------------------------------------------
 # Repo dir = directory containing this script
@@ -43,6 +45,14 @@ FILES=(
   ".config/nvim/lua/plugins/example.lua"
   ".config/nvim/lua/plugins/lualine.lua"
   ".config/nvim/lua/plugins/telescope.lua"
+)
+
+# Directory entries — entire directories synced recursively.
+# Format: "local_rel_path" or "local_rel_path => repo_rel_path"
+# Default repo path equals the local path (unlike FILES which uses basename).
+DIRS=(
+  ".claude/skills"
+  ".claude/commands"
 )
 
 usage() {
@@ -147,6 +157,24 @@ split_entry() {
   printf '%s|%s' "$local_rel" "$repo_rel"
 }
 
+# Like split_entry but defaults repo path = local path (not basename) — for directories.
+split_dir_entry() {
+  local entry="$1"
+  local local_rel repo_rel
+  if [[ "$entry" == *"=>"* ]]; then
+    local_rel="${entry%%=>*}"
+    repo_rel="${entry#*=>}"
+  else
+    local_rel="$entry"
+    repo_rel="$entry"
+  fi
+  local_rel="${local_rel#${local_rel%%[![:space:]]*}}"
+  local_rel="${local_rel%${local_rel##*[![:space:]]}}"
+  repo_rel="${repo_rel#${repo_rel%%[![:space:]]*}}"
+  repo_rel="${repo_rel%${repo_rel##*[![:space:]]}}"
+  printf '%s|%s' "$local_rel" "$repo_rel"
+}
+
 confirm_overwrite() {
   # $1 = dest path, $2 = src path, $3 = label (for display)
   local dest="$1" src="$2" label="$3"
@@ -225,6 +253,99 @@ copy_local_to_repo() {
   local mode=""
   if [[ "$local_rel" == .local/bin/* && -x "$src" ]]; then mode="0755"; fi
   copy_with_confirm "$src" "$dst" "Local → Repo: $repo_rel" "$mode"
+}
+
+copy_dir_repo_to_local() {
+  local entry="$1"
+  local pair
+  pair="$(split_dir_entry "$entry")"
+  local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
+  local repo_dir="$REPO_DIR/$repo_rel" local_dir="$HOME_DIR/$local_rel"
+  [[ -d "$repo_dir" ]] || { log "Repo dir missing: $repo_rel (skip)"; return; }
+  while IFS= read -r -d '' repo_file; do
+    local rel="${repo_file#${repo_dir}/}"
+    copy_with_confirm "$repo_file" "$local_dir/$rel" "Repo → Local: $local_rel/$rel" ""
+  done < <(find "$repo_dir" -type f -print0)
+}
+
+copy_dir_local_to_repo() {
+  local entry="$1"
+  local pair
+  pair="$(split_dir_entry "$entry")"
+  local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  [[ -d "$local_dir" ]] || { log "Local dir missing: $local_rel (skip)"; return; }
+  while IFS= read -r -d '' local_file; do
+    local rel="${local_file#${local_dir}/}"
+    copy_with_confirm "$local_file" "$repo_dir/$rel" "Local → Repo: $repo_rel/$rel" ""
+  done < <(find "$local_dir" -type f -print0)
+}
+
+status_dir() {
+  local entry="$1"
+  local pair
+  pair="$(split_dir_entry "$entry")"
+  local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  local ret=0
+  if [[ -d "$local_dir" ]]; then
+    while IFS= read -r -d '' local_file; do
+      local rel="${local_file#${local_dir}/}"
+      local repo_file="$repo_dir/$rel"
+      if [[ ! -e "$repo_file" ]]; then
+        echo "only-in-local: $local_rel/$rel"
+        ret=1
+      elif ! cmp -s "$local_file" "$repo_file"; then
+        echo "diff -- $local_rel/$rel ↔ $repo_rel/$rel"
+        diff -u "$repo_file" "$local_file" || true
+        ret=1
+      fi
+    done < <(find "$local_dir" -type f -print0)
+  fi
+  if [[ -d "$repo_dir" ]]; then
+    while IFS= read -r -d '' repo_file; do
+      local rel="${repo_file#${repo_dir}/}"
+      [[ -e "$local_dir/$rel" ]] || { echo "only-in-repo:  $repo_rel/$rel"; ret=1; }
+    done < <(find "$repo_dir" -type f -print0)
+  fi
+  [[ "$ret" -eq 0 ]] && log "No change: $local_rel/"
+  return $ret
+}
+
+sync_dir() {
+  local entry="$1"
+  local pair
+  pair="$(split_dir_entry "$entry")"
+  local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  local -a all_rels=()
+  if [[ -d "$local_dir" ]]; then
+    while IFS= read -r -d '' f; do
+      all_rels+=("${f#${local_dir}/}")
+    done < <(find "$local_dir" -type f -print0)
+  fi
+  if [[ -d "$repo_dir" ]]; then
+    while IFS= read -r -d '' f; do
+      local rel="${f#${repo_dir}/}"
+      local found=false
+      for existing in "${all_rels[@]+"${all_rels[@]}"}"; do
+        [[ "$existing" == "$rel" ]] && found=true && break
+      done
+      $found || all_rels+=("$rel")
+    done < <(find "$repo_dir" -type f -print0)
+  fi
+  for rel in "${all_rels[@]+"${all_rels[@]}"}"; do
+    local l="$local_dir/$rel" r="$repo_dir/$rel"
+    if [[ -e "$l" && -e "$r" ]]; then
+      if cmp -s "$l" "$r"; then
+        log "No change: $local_rel/$rel"
+      else
+        sync_existing_pair_by_hunk "$local_rel/$rel" "$repo_rel/$rel" "$l" "$r"
+      fi
+    else
+      sync_missing_pair "$local_rel/$rel" "$repo_rel/$rel" "$l" "$r"
+    fi
+  done
 }
 
 show_patch_file() {
@@ -453,6 +574,7 @@ do_sync() {
       sync_missing_pair "$local_rel" "$repo_rel" "$l" "$r"
     fi
   done
+  for entry in "${DIRS[@]}"; do sync_dir "$entry"; done
   reload_bashrc
 }
 
@@ -479,6 +601,7 @@ do_status() {
       echo "missing-both:  $local_rel | $repo_rel"
     fi
   done
+  for entry in "${DIRS[@]}"; do status_dir "$entry" || ret=1; done
   return $ret
 }
 
@@ -496,11 +619,13 @@ do_pull() {
   fi
 
   for rel in "${FILES[@]}"; do copy_repo_to_local "$rel"; done
+  for entry in "${DIRS[@]}"; do copy_dir_repo_to_local "$entry"; done
   reload_bashrc
 }
 
 do_push() {
   for rel in "${FILES[@]}"; do copy_local_to_repo "$rel"; done
+  for entry in "${DIRS[@]}"; do copy_dir_local_to_repo "$entry"; done
   log "Push copy complete."
 
   # Auto-commit via repo's git-ai-commit, then push to remote
