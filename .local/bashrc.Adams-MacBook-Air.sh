@@ -3,3 +3,5 @@
 pathappend "/opt/homebrew/opt/node@22/bin"        # node
 
 alias claude='claude --dangerously-skip-permissions --verbose --enable-auto-mode'
+
+NODE_ENV=development

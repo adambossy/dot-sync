@@ -198,9 +198,6 @@ if [ -f ~/.local/bin/bashmarks.sh ]; then
   source ~/.local/bin/bashmarks.sh
 fi
 
-# node
-export NODE_ENV=development
-
 # Run missing commands via uv only inside uv-managed Python projects
 in_uv_project() {
   local dir="$PWD"
