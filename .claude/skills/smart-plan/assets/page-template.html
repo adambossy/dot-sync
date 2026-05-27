@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PAGE_TITLE}} — {{PLAN_TITLE}}</title>
+<!-- Use ../ for each level below the plan root. Adjust per page. -->
+<link rel="stylesheet" href="{{ASSETS_PREFIX}}style.css">
+</head>
+<!--
+  data-plan-id     unique slug for the whole plan, e.g. "vertical-farm"
+  data-page-id     the same as this node's "id" in the tree manifest
+  data-page-depth  number of directory levels below the plan root (root = 0)
+-->
+<body data-plan-id="{{PLAN_ID}}" data-page-id="{{PAGE_ID}}" data-page-depth="{{PAGE_DEPTH}}">
+<div class="sp-layout">
+
+  <aside class="sp-sidebar" id="smartplan-sidebar" aria-label="Plan navigation">
+    <!-- populated by smartplan.js -->
+  </aside>
+
+  <div class="sp-main">
+    <div class="container">
+
+      <!-- Optional breadcrumbs — drop on the root page. -->
+      <p class="crumbs">
+        <a href="{{ASSETS_PREFIX}}index.html">{{PLAN_TITLE}}</a>
+        &nbsp;/&nbsp; {{BREADCRUMB_TAIL}}
+      </p>
+
+      <header class="page-header">
+        <p class="eyebrow">{{EYEBROW}}</p>
+        <h1>{{PAGE_TITLE}}</h1>
+        <p class="lede">{{LEDE}}</p>
+      </header>
+
+      <!-- Requirements block. Omit on purely descriptive pages. -->
+      <section class="requirements">
+        <h2>Requirements</h2>
+        <ol>
+          <li>Plain-English statement of what success looks like for the reader.</li>
+          <li>Each item names the user and the outcome — no implementation jargon.</li>
+        </ol>
+      </section>
+
+      <!-- ============ SECTIONS ============ -->
+
+      <section id="my-section-id">
+        <header class="section-header">
+          <h2>Section title</h2>
+          <label class="section-check-wrap" title="Mark section as read">
+            <input type="checkbox" class="section-check" data-section-id="my-section-id">
+            <span class="section-check-label">Read</span>
+          </label>
+        </header>
+        <p>Section content…</p>
+      </section>
+
+      <!-- More sections follow the same pattern. -->
+
+      <!-- ============ /SECTIONS ============ -->
+
+      <p class="foot">{{FOOT_LINKS}}</p>
+
+    </div>
+  </div>
+</div>
+
+<!-- Tree manifest — IDENTICAL on every page in this plan. -->
+<script id="smartplan-tree" type="application/json">
+{
+  "title": "{{PLAN_TITLE}}",
+  "root": {
+    "id": "root",
+    "label": "Executive summary",
+    "href": "index.html",
+    "sections": ["intro", "approach", "tradeoffs"],
+    "children": []
+  }
+}
+</script>
+
+<!-- Mermaid: required for diagrams. The one external dependency. -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="{{ASSETS_PREFIX}}smartplan.js"></script>
+</body>
+</html>
