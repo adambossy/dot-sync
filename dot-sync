@@ -82,13 +82,31 @@ ASSUME_YES=false
 have_colordiff=false
 command -v colordiff >/dev/null 2>&1 && have_colordiff=true
 
+# Colorize unified-diff text on stdin with ANSI colors. Used as a built-in
+# fallback when colordiff is not installed so sync/diff/status output is still
+# readable. Colors are emitted only when stdout is a TTY (so piped/redirected
+# output stays clean).
+colorize_diff() {
+  if [[ -t 1 ]]; then
+    awk '
+      /^\+\+\+/ || /^---/ { printf "\033[1m%s\033[0m\n", $0; next }   # file headers (bold)
+      /^@@/                { printf "\033[36m%s\033[0m\n", $0; next }  # hunk header (cyan)
+      /^\+/                { printf "\033[32m%s\033[0m\n", $0; next }  # additions (green)
+      /^-/                 { printf "\033[31m%s\033[0m\n", $0; next }  # deletions (red)
+                           { print }
+    '
+  else
+    cat
+  fi
+}
+
 show_diff() {
   # $1 = old (dest), $2 = new (src)
   if [[ -e "$1" ]]; then
     if $have_colordiff; then
       colordiff -u "$1" "$2" || true
     else
-      diff -u "$1" "$2" || true
+      diff -u "$1" "$2" | colorize_diff || true
     fi
   else
     echo "--- $1 (missing)"
@@ -96,7 +114,7 @@ show_diff() {
     if $have_colordiff; then
       colordiff -u /dev/null "$2" || true
     else
-      diff -u /dev/null "$2" || true
+      diff -u /dev/null "$2" | colorize_diff || true
     fi
   fi
 }
@@ -298,7 +316,7 @@ status_dir() {
         ret=1
       elif ! cmp -s "$local_file" "$repo_file"; then
         echo "diff -- $local_rel/$rel ↔ $repo_rel/$rel"
-        diff -u "$repo_file" "$local_file" || true
+        diff -u "$repo_file" "$local_file" | colorize_diff || true
         ret=1
       fi
     done < <(find "$local_dir" -type f -print0)
@@ -354,7 +372,7 @@ show_patch_file() {
   if $have_colordiff; then
     colordiff <"$patch_file" || true
   else
-    cat "$patch_file"
+    colorize_diff <"$patch_file"
   fi
 }
 
@@ -373,7 +391,7 @@ show_reverse_patch_file() {
   if $have_colordiff; then
     printf '%s\n' "$reversed" | colordiff || true
   else
-    printf '%s\n' "$reversed"
+    printf '%s\n' "$reversed" | colorize_diff
   fi
 }
 
@@ -589,7 +607,7 @@ do_status() {
     if [[ -e "$l" && -e "$r" ]]; then
       if ! cmp -s "$l" "$r"; then
         echo "diff -- $local_rel ↔ $repo_rel"
-        diff -u "$r" "$l" || true
+        diff -u "$r" "$l" | colorize_diff || true
         ret=1
       fi
     elif [[ -e "$l" && ! -e "$r" ]]; then
