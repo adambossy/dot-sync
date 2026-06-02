@@ -129,17 +129,23 @@ smartplan-<slug>/
 ## Generation procedure
 
 1. **Ask first.** Identify 2–4 unknowns whose answers change the tree's shape and ask the user with `AskUserQuestion` (Claude Code) or the host agent's equivalent. Skip if you genuinely have enough context.
-2. **Sketch the tree** on paper. Include the `assumptions/` branch. List every node with a one-line purpose. Decide which are leaves. Don't write any HTML yet.
-3. **Assign IDs.** Every node gets a stable kebab-case `id` (used as the `pageId` and in localStorage). Every section within a page gets a unique kebab-case `id`.
-4. **Create the directory** and copy the shared assets:
+2. **Research & explore (read-only).** Before sketching the tree, gather the context the plan will rest on. You're learning, not building — don't create or modify anything.
+   - Read any files, briefs, or references provided to you.
+   - If the plan touches an existing codebase, find existing patterns and conventions, understand the current architecture, identify similar features as reference, and trace the relevant code paths. Use Bash only for read-only operations (`ls`, `git status`, `git log`, `git diff`, `find`, `grep`, `cat`, `head`, `tail`).
+   - **Use web search freely** — especially when the plan involves third-party libraries, vendors, APIs, or services. Verify current versions, pricing, rate limits, setup steps, and recommended practices rather than guessing. A plan built on stale or assumed third-party details is worse than one that honestly records an open question.
+   - Anything you can't resolve here becomes an entry on the `assumptions/` page (an assumption you made, or an open question for the reader).
+   - Skip or trim this when you genuinely already have enough context.
+3. **Sketch the tree** on paper. Include the `assumptions/` branch. List every node with a one-line purpose. Decide which are leaves. Don't write any HTML yet.
+4. **Assign IDs.** Every node gets a stable kebab-case `id` (used as the `pageId` and in localStorage). Every section within a page gets a unique kebab-case `id`.
+5. **Create the directory** and copy the shared assets:
    ```bash
    mkdir -p smartplan-<slug>
    cp <SKILL_DIR>/assets/style.css smartplan-<slug>/
    cp <SKILL_DIR>/assets/smartplan.js smartplan-<slug>/
    ```
    Where `<SKILL_DIR>` is the directory containing this `SKILL.md` (for the default install, `~/.agents/skills/smart-plan` or `~/.claude/skills/smart-plan`).
-5. **Build the tree manifest** (JSON) — see "Tree manifest" below. The exact same JSON is embedded in every page so the sidebar is identical everywhere.
-6. **Generate each HTML page** from the template in `assets/page-template.html`. Per-page fill-ins:
+6. **Build the tree manifest** (JSON) — see "Tree manifest" below. The exact same JSON is embedded in every page so the sidebar is identical everywhere.
+7. **Generate each HTML page** from the template in `assets/page-template.html`. Per-page fill-ins:
    - `data-plan-id`, `data-page-id`, `data-page-depth` on `<body>`
    - the `<link>` and `<script src>` paths (`../style.css` etc. based on depth)
    - the breadcrumb trail
@@ -149,8 +155,9 @@ smartplan-<slug>/
    - any Mermaid diagrams as `<div class="mermaid">…</div>`
    - the JSON in `<script id="smartplan-tree" type="application/json">`
    - the Mermaid CDN script (already at the bottom of the template)
-7. **Generate `assumptions/index.html`** — three sections: "What I asked you", "What I assumed without asking", "Open questions". Give each open question a stable `id`, link it to the section(s) it affects, and add a matching `.open-q` back-link in each of those sections (see "Open questions must link both ways").
-8. **Verify** by opening `index.html` in a browser. The sidebar should appear, every section should have a checkbox on the right, Mermaid diagrams should render, and checking a section should fill the dot next to that page in the sidebar.
+8. **Generate `assumptions/index.html`** — three sections: "What I asked you", "What I assumed without asking", "Open questions". Give each open question a stable `id`, link it to the section(s) it affects, and add a matching `.open-q` back-link in each of those sections (see "Open questions must link both ways").
+9. **Verify** by opening `index.html` in a browser. The sidebar should appear, every section should have a checkbox on the right, Mermaid diagrams should render, and checking a section should fill the dot next to that page in the sidebar.
+10. **Review the open questions with the user.** Once the plan exists, walk back through every open question on the `assumptions/` page and put each one to the user — in Claude Code, use `AskUserQuestion` (or the host agent's equivalent interactive prompt elsewhere). Ask about all of them, not just the ones that fit in a single batch; `AskUserQuestion` takes up to 4 questions per call, so make multiple calls if there are more. As the user answers, fold each resolution into the plan: move it from "Open questions" to "What I asked you", update the affected section(s), bump those sections' `data-section-version`, and remove the now-stale `.open-q` back-links (see "Updating an existing plan"). Leave genuinely unanswered questions ("Other" / skipped) where they are.
 
 ## Updating an existing plan
 
