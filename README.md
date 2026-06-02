@@ -192,6 +192,11 @@ The following files are automatically synced by default:
 - `~/Library/Application Support/Amethyst/Layouts/centered-primary-columns.js`
 - `~/Library/Application Support/Amethyst/Layouts/centered-twin-columns.js`
 
+**Claude Code agents** (`~/.claude/agents/`):
+- `adversarial-reviewer.md` — Adversarial branch reviewer
+- `architecture.md` — Senior software architect reviewer
+- `code-quality.md` — Unit-level code quality reviewer
+
 Files are tracked in the `FILES` array within the script and can be easily modified.
 
 ---

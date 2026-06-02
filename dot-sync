@@ -46,6 +46,9 @@ FILES=(
   ".config/nvim/lua/plugins/example.lua"
   ".config/nvim/lua/plugins/lualine.lua"
   ".config/nvim/lua/plugins/telescope.lua"
+  ".claude/agents/adversarial-reviewer.md => .claude/agents/adversarial-reviewer.md"
+  ".claude/agents/architecture.md => .claude/agents/architecture.md"
+  ".claude/agents/code-quality.md => .claude/agents/code-quality.md"
 )
 
 # Directory entries — entire directories synced recursively.
