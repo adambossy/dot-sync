@@ -210,6 +210,7 @@ Rules:
 
 - Editorial serif at body; sans-serif for chrome and small labels. Don't add new fonts.
 - Each page should feel like a 1-pager — prose, short lists, the occasional table.
+- **Favor bulleted lists over dense enumerative prose.** When a sentence or paragraph strings several discrete items together — especially with semicolons or a run of "X does this; Y does that; Z does the other" — break it into a bulleted list with one item per line. A reader should be able to scan the distinct points without parsing a wall of text. Reserve flowing prose for genuine narrative or argument; the moment you're enumerating parallel things (steps, components, responsibilities, transitions, options), reach for a list.
 - Use `<details>`/`<summary>` (from the included styles) to fold subordinate detail within a page without leaving the page.
 - Prefer concrete numbers, dates, named tradeoffs, and links to children over generic prose.
 - Diagrams: Mermaid only. No ASCII art.
