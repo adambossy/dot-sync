@@ -56,12 +56,32 @@ Bidirectional dotfile synchronization between `$HOME` and a Git repository with 
 
 ### How it works
 
-- The script tracks a predefined list of dotfiles and utilities in the `FILES` array
-- Each file can be synced either by name (implicit mapping) or with explicit `local_path => repo_path` syntax
+- The script tracks a predefined list of dotfiles and utilities in the `FILES` array (and whole directories in `DIRS`)
+- Tracked files are stored under the repo's `home/` directory, which **mirrors `$HOME`**: a file synced to `~/PATH` is stored at `home/PATH` (e.g. `~/.local/bin/git-ai-commit` ⟷ `home/.local/bin/git-ai-commit`)
+- Each entry is just the path relative to `$HOME`; an explicit `local_path => repo_path` mapping is still honored if you ever need to diverge
 - Before overwriting any file, the script shows a diff and asks for confirmation
 - All overwrites create timestamped backups in `.bak/<filename>/`
 - On `push`, changes are automatically committed using `git-ai-commit` and pushed to the remote repository
 - Color-coded diffs are shown when `colordiff` is available
+
+### Repository layout
+
+```
+dot-sync/
+├── dot-sync          # the sync program
+├── README.md         # this file
+├── .gitignore
+├── .bak/             # automatic backups (gitignored)
+└── home/             # tracked files — mirrors $HOME exactly
+    ├── .vimrc
+    ├── .bashrc
+    ├── .config/nvim/lua/...
+    ├── .claude/{agents,commands,skills}/...
+    ├── .local/bin/...
+    └── Library/Application Support/Amethyst/Layouts/...
+```
+
+Program files live at the repo root; everything that gets synced into `$HOME` lives under `home/`, at the same relative path it occupies in `$HOME`.
 
 ---
 
@@ -220,18 +240,18 @@ FILES=(
 
 ### Custom path mappings
 
-For files where the repo path differs from the local path, use the `=>` syntax:
+By default the repo path mirrors the `$HOME`-relative path under `home/`. For the rare case where the repo path must differ, use the `=>` syntax:
 
 ```bash
 FILES=(
-  ".vimrc"  # Implicit: ~/.vimrc <=> ./vimrc (basename)
-  "Library/Application Support/Amethyst/Layouts/centered-primary-columns.js => centered-primary-columns.js"
+  ".vimrc"  # Implicit: ~/.vimrc <=> home/.vimrc
+  "some/local/path => home/elsewhere/path"
 )
 ```
 
 - **Left side**: Path relative to `$HOME`
-- **Right side**: Path relative to the repository root
-- If no `=>` is specified, the repo path defaults to the basename of the local path
+- **Right side**: Path relative to the repository root (typically under `home/`)
+- If no `=>` is specified, the repo path mirrors the local path under `home/`
 
 ### Environment variables
 
@@ -244,7 +264,7 @@ FILES=(
 
 `dot-sync` supports host-scoped `.bashrc` extensions committed in this repo.
 
-- Naming convention: `.local/bashrc.$HOSTNAME_SHORT.sh`
+- Naming convention: `~/.local/bashrc.$HOSTNAME_SHORT.sh` (tracked at `home/.local/bashrc.$HOSTNAME_SHORT.sh`)
 - Load behavior: `.bashrc` sources only the host-specific file for the current machine.
 - Host key source: `hostname -s`
 
@@ -252,9 +272,9 @@ Setup:
 
 ```bash
 cd ~/code/dot-sync
-mkdir -p .local
-cp .local/bashrc.HOSTNAME.example.sh ".local/bashrc.$(hostname -s).sh"
-$EDITOR ".local/bashrc.$(hostname -s).sh"
+mkdir -p home/.local
+cp home/.local/bashrc.HOSTNAME.example.sh "home/.local/bashrc.$(hostname -s).sh"
+$EDITOR "home/.local/bashrc.$(hostname -s).sh"
 ```
 
 Example use case for PostgreSQL build tooling on one machine:

@@ -2,17 +2,16 @@
 set -euo pipefail
 
 # dot-sync: sync dotfiles between $HOME and this repo, with confirm-before-overwrite.
-# Tracks:
-#   ~/.vimrc
-#   ~/.bashrc
-#   ~/.gitconfig
-#   ~/.git-completion.bash
-#   ~/.local/bin/{git-ai-commit,git-clean-local-branches,git-clean-rebase,convert-heics-to-jpgs,organize-files}
-#   ~/.claude/skills/    (directory)
-#   ~/.claude/commands/  (directory)
+#
+# Tracked files live under the repo's "home/" directory, which mirrors $HOME
+# exactly: a file synced to ~/PATH is stored at <repo>/home/PATH. Examples:
+#   ~/.vimrc                       <-> home/.vimrc
+#   ~/.local/bin/git-ai-commit     <-> home/.local/bin/git-ai-commit
+#   ~/.claude/skills/  (directory) <-> home/.claude/skills/
 
 # -------------------------------------------------------------------
-# Repo dir = directory containing this script
+# Repo dir = directory containing this script.
+# Tracked files are mirrored under $REPO_DIR/home (TRACKED_DIR).
 # -------------------------------------------------------------------
 if [[ -z "${DOTSYNC_REPO:-}" ]]; then
   DOTSYNC_REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +19,11 @@ if [[ -z "${DOTSYNC_REPO:-}" ]]; then
 fi
 HOME_DIR="$HOME"
 REPO_DIR="$DOTSYNC_REPO"
+TRACKED_DIR="$REPO_DIR/home"
 
+# Each entry is a path relative to $HOME. The repo copy lives at the same
+# relative path under home/ (TRACKED_DIR), so the repo mirrors $HOME. An
+# explicit "local_rel => repo_rel" mapping is still honored if ever needed.
 FILES=(
   ".vimrc"
   ".bashrc"
@@ -46,14 +49,14 @@ FILES=(
   ".config/nvim/lua/plugins/example.lua"
   ".config/nvim/lua/plugins/lualine.lua"
   ".config/nvim/lua/plugins/telescope.lua"
-  ".claude/agents/adversarial-reviewer.md => .claude/agents/adversarial-reviewer.md"
-  ".claude/agents/architecture.md => .claude/agents/architecture.md"
-  ".claude/agents/code-quality.md => .claude/agents/code-quality.md"
+  ".claude/agents/adversarial-reviewer.md"
+  ".claude/agents/architecture.md"
+  ".claude/agents/code-quality.md"
 )
 
 # Directory entries — entire directories synced recursively.
-# Format: "local_rel_path" or "local_rel_path => repo_rel_path"
-# Default repo path equals the local path (unlike FILES which uses basename).
+# Format: "local_rel_path" or "local_rel_path => repo_rel_path".
+# Like FILES, the repo copy mirrors the $HOME-relative path under home/.
 DIRS=(
   ".claude/skills"
   ".claude/commands"
@@ -168,8 +171,8 @@ split_entry() {
     repo_rel="${entry#*=>}"
   else
     local_rel="$entry"
-    # Implicit mapping: always map repo path to the basename of the local path
-    repo_rel="${local_rel##*/}"
+    # Implicit mapping: repo path mirrors the $HOME-relative path (under home/).
+    repo_rel="$local_rel"
   fi
   # trim leading/trailing whitespace on both sides
   local_rel="${local_rel#${local_rel%%[![:space:]]*}}"
@@ -250,7 +253,7 @@ copy_repo_to_local() {
   local pair
   pair="$(split_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local src="$REPO_DIR/$repo_rel" dst="$HOME_DIR/$local_rel"
+  local src="$TRACKED_DIR/$repo_rel" dst="$HOME_DIR/$local_rel"
   [[ -e "$src" ]] || {
     log "Repo missing $repo_rel (skip)"
     return
@@ -266,7 +269,7 @@ copy_local_to_repo() {
   local pair
   pair="$(split_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local src="$HOME_DIR/$local_rel" dst="$REPO_DIR/$repo_rel"
+  local src="$HOME_DIR/$local_rel" dst="$TRACKED_DIR/$repo_rel"
   [[ -e "$src" ]] || {
     log "Local missing $local_rel (skip)"
     return
@@ -282,7 +285,7 @@ copy_dir_repo_to_local() {
   local pair
   pair="$(split_dir_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local repo_dir="$REPO_DIR/$repo_rel" local_dir="$HOME_DIR/$local_rel"
+  local repo_dir="$TRACKED_DIR/$repo_rel" local_dir="$HOME_DIR/$local_rel"
   [[ -d "$repo_dir" ]] || { log "Repo dir missing: $repo_rel (skip)"; return; }
   while IFS= read -r -d '' repo_file; do
     local rel="${repo_file#${repo_dir}/}"
@@ -295,7 +298,7 @@ copy_dir_local_to_repo() {
   local pair
   pair="$(split_dir_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$TRACKED_DIR/$repo_rel"
   [[ -d "$local_dir" ]] || { log "Local dir missing: $local_rel (skip)"; return; }
   while IFS= read -r -d '' local_file; do
     local rel="${local_file#${local_dir}/}"
@@ -308,7 +311,7 @@ status_dir() {
   local pair
   pair="$(split_dir_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$TRACKED_DIR/$repo_rel"
   local ret=0
   if [[ -d "$local_dir" ]]; then
     while IFS= read -r -d '' local_file; do
@@ -339,7 +342,7 @@ sync_dir() {
   local pair
   pair="$(split_dir_entry "$entry")"
   local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-  local local_dir="$HOME_DIR/$local_rel" repo_dir="$REPO_DIR/$repo_rel"
+  local local_dir="$HOME_DIR/$local_rel" repo_dir="$TRACKED_DIR/$repo_rel"
   local -a all_rels=()
   if [[ -d "$local_dir" ]]; then
     while IFS= read -r -d '' f; do
@@ -584,7 +587,7 @@ do_sync() {
     local_rel="${pair%%|*}"
     repo_rel="${pair##*|}"
     l="$HOME_DIR/$local_rel"
-    r="$REPO_DIR/$repo_rel"
+    r="$TRACKED_DIR/$repo_rel"
 
     if [[ -e "$l" && -e "$r" ]]; then
       if cmp -s "$l" "$r"; then
@@ -606,7 +609,7 @@ do_status() {
     local pair
     pair="$(split_entry "$entry")"
     local local_rel="${pair%%|*}" repo_rel="${pair##*|}"
-    local l="$HOME_DIR/$local_rel" r="$REPO_DIR/$repo_rel"
+    local l="$HOME_DIR/$local_rel" r="$TRACKED_DIR/$repo_rel"
     if [[ -e "$l" && -e "$r" ]]; then
       if ! cmp -s "$l" "$r"; then
         echo "diff -- $local_rel ↔ $repo_rel"
@@ -659,8 +662,14 @@ do_push() {
         log "No repo changes to commit."
       else
         git add -A
-        if [[ -x "$REPO_DIR/git-ai-commit" ]]; then
-          "$REPO_DIR/git-ai-commit"
+        # Prefer the tracked copy under home/; fall back to PATH (dot-sync
+        # syncs git-ai-commit to ~/.local/bin, which is normally on PATH).
+        gac="$TRACKED_DIR/.local/bin/git-ai-commit"
+        if [[ -x "$gac" ]]; then
+          "$gac"
+          log "Committed using git-ai-commit."
+        elif command -v git-ai-commit >/dev/null 2>&1; then
+          git-ai-commit
           log "Committed using git-ai-commit."
         else
           warn "git-ai-commit not found or not executable; skipping commit."
