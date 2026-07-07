@@ -234,7 +234,7 @@ fi
 if [[ -n "${_dotsync_repo:-}" ]]; then
   _host_short="$(hostname -s 2>/dev/null || true)"
   if [[ -n "$_host_short" ]]; then
-    _host_bashrc="$_dotsync_repo/.local/bashrc.${_host_short}.sh"
+    _host_bashrc="$_dotsync_repo/home/.local/bashrc.${_host_short}.sh"
     if [[ -f "$_host_bashrc" ]]; then
       # shellcheck disable=SC1090
       source "$_host_bashrc"

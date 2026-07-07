@@ -290,7 +290,7 @@ copy_dir_repo_to_local() {
   while IFS= read -r -d '' repo_file; do
     local rel="${repo_file#${repo_dir}/}"
     copy_with_confirm "$repo_file" "$local_dir/$rel" "Repo → Local: $local_rel/$rel" ""
-  done < <(find "$repo_dir" -type f -print0)
+  done < <(find "$repo_dir" -type f ! -name .DS_Store -print0)
 }
 
 copy_dir_local_to_repo() {
@@ -303,7 +303,7 @@ copy_dir_local_to_repo() {
   while IFS= read -r -d '' local_file; do
     local rel="${local_file#${local_dir}/}"
     copy_with_confirm "$local_file" "$repo_dir/$rel" "Local → Repo: $repo_rel/$rel" ""
-  done < <(find "$local_dir" -type f -print0)
+  done < <(find "$local_dir" -type f ! -name .DS_Store -print0)
 }
 
 status_dir() {
@@ -325,13 +325,13 @@ status_dir() {
         diff -u "$repo_file" "$local_file" | colorize_diff || true
         ret=1
       fi
-    done < <(find "$local_dir" -type f -print0)
+    done < <(find "$local_dir" -type f ! -name .DS_Store -print0)
   fi
   if [[ -d "$repo_dir" ]]; then
     while IFS= read -r -d '' repo_file; do
       local rel="${repo_file#${repo_dir}/}"
       [[ -e "$local_dir/$rel" ]] || { echo "only-in-repo:  $repo_rel/$rel"; ret=1; }
-    done < <(find "$repo_dir" -type f -print0)
+    done < <(find "$repo_dir" -type f ! -name .DS_Store -print0)
   fi
   [[ "$ret" -eq 0 ]] && log "No change: $local_rel/"
   return $ret
@@ -347,7 +347,7 @@ sync_dir() {
   if [[ -d "$local_dir" ]]; then
     while IFS= read -r -d '' f; do
       all_rels+=("${f#${local_dir}/}")
-    done < <(find "$local_dir" -type f -print0)
+    done < <(find "$local_dir" -type f ! -name .DS_Store -print0)
   fi
   if [[ -d "$repo_dir" ]]; then
     while IFS= read -r -d '' f; do
@@ -357,7 +357,7 @@ sync_dir() {
         [[ "$existing" == "$rel" ]] && found=true && break
       done
       $found || all_rels+=("$rel")
-    done < <(find "$repo_dir" -type f -print0)
+    done < <(find "$repo_dir" -type f ! -name .DS_Store -print0)
   fi
   for rel in "${all_rels[@]+"${all_rels[@]}"}"; do
     local l="$local_dir/$rel" r="$repo_dir/$rel"
